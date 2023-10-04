@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from duty import duty
-from duty.callables import black, blacken_docs, coverage, lazy, mkdocs, mypy, pytest, ruff, safety
+from duty.callables import black, blacken_docs, coverage, isort, lazy, mkdocs, mypy, pytest, ruff, safety, ssort
 
 if TYPE_CHECKING:
     from duty.context import Context
@@ -109,6 +109,29 @@ def check_quality(ctx: Context) -> None:
 
 
 @duty
+def requirements(ctx: Context, *, dev: bool = False, as_string: bool = False) -> None | str:
+    """Generate PIP requirements as file or string.
+
+    Parameters:
+        ctx: The context instance (passed automatically).
+        dev: Whether or not to include dev requirements.
+        as_string: Whether or not to return as a string instead of writing a file.
+    """
+    command = ["pdm", "export", "-f", "requirements", "--without-hashes"]
+    if not dev:
+        command = [*command, "--prod"]
+    if not as_string:
+        command = [*command, "-o", "requirements.txt"]
+    output = ctx.run(
+        command,
+        title="Exporting requirements",
+        allow_overrides=False,
+    )
+
+    return output if as_string else None
+
+
+@duty
 def check_dependencies(ctx: Context) -> None:
     """Check for vulnerabilities in dependencies.
 
@@ -116,14 +139,9 @@ def check_dependencies(ctx: Context) -> None:
         ctx: The context instance (passed automatically).
     """
     # retrieve the list of dependencies
-    requirements = ctx.run(
-        ["pdm", "export", "-f", "requirements", "--without-hashes"],
-        title="Exporting dependencies as requirements",
-        allow_overrides=False,
-    )
-
+    requirements_str = requirements(ctx, as_string = True, dev = True)
     ctx.run(
-        safety.check(requirements),
+        safety.check(requirements_str),
         title="Checking dependencies",
         command="pdm export -f requirements --without-hashes | safety check --stdin",
     )
@@ -255,6 +273,8 @@ def format(ctx: Context) -> None:
         ruff.check(*PY_SRC_LIST, config="config/ruff.toml", fix_only=True, exit_zero=True),
         title="Auto-fixing code",
     )
+    ctx.run(isort.run(*PY_SRC_LIST), title="Sorting imports")
+    ctx.run(ssort.run(*PY_SRC_LIST), title="Sorting code")
     ctx.run(black.run(*PY_SRC_LIST, config="config/black.toml"), title="Formatting code")
     ctx.run(
         blacken_docs.run(*PY_SRC_LIST, "docs", exts=["py", "md"], line_length=120),

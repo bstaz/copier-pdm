@@ -30,6 +30,8 @@ def main(args: list[str] | None = None) -> int:
 
     This function is executed when you type `{{ python_package_command_line_name }}` or `python -m {{ python_package_import_name }}`.
 
+    See argparse dogs: https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.add_argument
+
     Parameters:
         args: Arguments passed from the command line.
 
@@ -37,6 +39,10 @@ def main(args: list[str] | None = None) -> int:
         An exit code.
     """
     parser = get_parser()
+    # Add an argument
+    parser.add_argument('foo')
+    # Add a flag
+    parser.add_argument('-b', '--bar', action='store_true')
     opts = parser.parse_args(args=args)
     print(opts)
     return 0

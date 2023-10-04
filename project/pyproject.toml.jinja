@@ -94,7 +94,9 @@ classifiers = [
     "Topic :: Utilities",
     "Typing :: Typed",
 ]
-dependencies = []
+dependencies = [
+    "rich>=13.6.0",
+]
 
 [project.urls]
 Homepage = "https://{{ repository_namespace }}.{{ repository_provider.rsplit('.', 1)[0] }}.io/{{ repository_name }}"
@@ -147,6 +149,8 @@ maintain = [
     "black>=23.1",
     "blacken-docs>=1.13",
     "git-changelog>=1.0",
+    "isort>=5.12.0",
+    "ssort>=0.11.6",
 ]
 quality = [
     "ruff>=0.0.246",
